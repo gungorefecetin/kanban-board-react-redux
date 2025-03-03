@@ -76,22 +76,6 @@ npm start
 - Apply multiple labels to tasks
 - Remove labels from the system
 
-## Project Structure
-
-```
-src/
-├── components/         # React components
-│   ├── AddTaskForm.tsx
-│   ├── Board.tsx
-│   ├── Column.tsx
-│   ├── Task.tsx
-│   └── TaskDetails.tsx
-├── store/             # Redux store and slices
-│   ├── kanbanSlice.ts
-│   └── store.ts
-└── App.tsx            # Root component
-```
-
 ## Future Enhancements
 
 - User authentication and authorization
