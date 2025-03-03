@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, memo, useCallback } from 'react';
 import styled from 'styled-components';
 import { Draggable } from 'react-beautiful-dnd';
 import { Task as TaskType } from '../store/kanbanSlice';
@@ -13,6 +13,7 @@ const TaskCard = styled.div<{ isDragging: boolean; priority: TaskType['priority'
   margin-bottom: 8px;
   box-shadow: ${props => props.isDragging ? '0 5px 10px rgba(0, 0, 0, 0.15)' : '0 1px 3px rgba(0, 0, 0, 0.12)'};
   user-select: none;
+  transform: ${props => props.isDragging ? 'rotate(3deg)' : 'none'};
   border-left: 3px solid ${props => {
     switch (props.priority) {
       case 'high':
@@ -82,14 +83,22 @@ interface TaskProps extends TaskType {
   index: number;
 }
 
-const Task: React.FC<TaskProps> = ({ id, title, description, index, priority, dueDate, labels, status, ...rest }) => {
+const Task: React.FC<TaskProps> = memo(({ id, title, description, index, priority, dueDate, labels, status, ...rest }) => {
   const dispatch = useDispatch();
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  const handleDelete = (e: React.MouseEvent) => {
+  const handleDelete = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     dispatch(deleteTask(id));
-  };
+  }, [dispatch, id]);
+
+  const handleClick = useCallback(() => {
+    setIsDetailsOpen(true);
+  }, []);
+
+  const handleClose = useCallback(() => {
+    setIsDetailsOpen(false);
+  }, []);
 
   const isOverdue = dueDate ? new Date(dueDate) < new Date() : false;
 
@@ -103,7 +112,7 @@ const Task: React.FC<TaskProps> = ({ id, title, description, index, priority, du
             ref={provided.innerRef}
             isDragging={snapshot.isDragging}
             priority={priority}
-            onClick={() => setIsDetailsOpen(true)}
+            onClick={handleClick}
           >
             <DeleteButton onClick={handleDelete}>×</DeleteButton>
             <TaskTitle>{title}</TaskTitle>
@@ -124,11 +133,13 @@ const Task: React.FC<TaskProps> = ({ id, title, description, index, priority, du
       {isDetailsOpen && (
         <TaskDetails
           task={{ id, title, description, priority, dueDate, labels, status, ...rest }}
-          onClose={() => setIsDetailsOpen(false)}
+          onClose={handleClose}
         />
       )}
     </>
   );
-};
+});
+
+Task.displayName = 'Task';
 
 export default Task; 

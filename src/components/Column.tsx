@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import styled from 'styled-components';
 import { Droppable } from 'react-beautiful-dnd';
 import Task from './Task';
@@ -37,7 +37,7 @@ interface ColumnProps {
   id: string;
 }
 
-const Column: React.FC<ColumnProps> = ({ title, tasks, id }) => {
+const Column: React.FC<ColumnProps> = memo(({ title, tasks, id }) => {
   return (
     <ColumnContainer>
       <ColumnTitle>{title}</ColumnTitle>
@@ -57,6 +57,8 @@ const Column: React.FC<ColumnProps> = ({ title, tasks, id }) => {
       </Droppable>
     </ColumnContainer>
   );
-};
+});
+
+Column.displayName = 'Column';
 
 export default Column; 

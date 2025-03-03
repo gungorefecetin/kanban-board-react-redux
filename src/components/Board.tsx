@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import styled from 'styled-components';
-import { DragDropContext, DropResult } from 'react-beautiful-dnd';
+import { DragDropContext, DropResult, resetServerContext } from 'react-beautiful-dnd';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store/store';
 import { updateTaskStatus } from '../store/kanbanSlice';
@@ -12,7 +12,6 @@ const BoardContainer = styled.div`
   flex-direction: column;
   align-items: center;
   min-height: 100vh;
-  background: #f9fafc;
   padding: 20px;
 `;
 
@@ -27,6 +26,8 @@ const ColumnsContainer = styled.div`
   gap: 16px;
   margin-top: 20px;
   flex-wrap: wrap;
+  width: 100%;
+  max-width: 1200px;
 `;
 
 const COLUMN_IDS = {
@@ -50,25 +51,28 @@ const COLUMNS = [
   },
 ] as const;
 
+// Reset server context for SSR
+resetServerContext();
+
 const Board: React.FC = () => {
   const tasks = useSelector((state: RootState) => state.kanban.tasks);
   const dispatch = useDispatch();
 
-  const getColumnTasks = (columnId: string) => {
+  const getColumnTasks = useCallback((columnId: string) => {
     return tasks.filter(task => task.status === columnId);
-  };
+  }, [tasks]);
 
-  const onDragEnd = (result: DropResult) => {
+  const onDragEnd = useCallback((result: DropResult) => {
     const { destination, source, draggableId } = result;
 
-    // If there's no destination or the item was dropped in the same place
+    // If there's no destination or the item was dropped in its original position
     if (!destination || 
         (destination.droppableId === source.droppableId && 
          destination.index === source.index)) {
       return;
     }
 
-    // Get the task that was dragged
+    // Find the task that was dragged
     const task = tasks.find(t => t.id === draggableId);
     if (!task) return;
 
@@ -79,13 +83,19 @@ const Board: React.FC = () => {
       taskId: draggableId,
       status: newStatus
     }));
-  };
+  }, [dispatch, tasks]);
+
+  const onDragStart = useCallback(() => {
+    if (window.navigator.vibrate) {
+      window.navigator.vibrate(100);
+    }
+  }, []);
 
   return (
-    <BoardContainer>
-      <BoardTitle>Kanban Board</BoardTitle>
-      <AddTaskForm />
-      <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext onDragEnd={onDragEnd} onDragStart={onDragStart}>
+      <BoardContainer>
+        <BoardTitle>Kanban Board</BoardTitle>
+        <AddTaskForm />
         <ColumnsContainer>
           {COLUMNS.map((column) => (
             <Column
@@ -96,8 +106,8 @@ const Board: React.FC = () => {
             />
           ))}
         </ColumnsContainer>
-      </DragDropContext>
-    </BoardContainer>
+      </BoardContainer>
+    </DragDropContext>
   );
 };
 
